@@ -10,6 +10,7 @@ func NewManager() *Manager {
     return &Manager{resolvers: []Resolver{
         CodeforcesResolver{},
         VJudgeResolver{},
+        AtCoderResolver{},
         GenericResolver{},
     }}
 }
@@ -26,4 +27,3 @@ func (m *Manager) Resolve(basePath, url string) (ProblemInfo, error) {
     // fallback to generic as last resort
     return GenericResolver{}.Resolve(basePath, lower)
 }
-
