@@ -21,13 +21,13 @@ archives:
 
 brews:
   - name: puc-companion
-    tap:
+    repository:
       owner: tomytp
-      name: puc-companion
+      name: homebrew-tap
     commit_author:
       name: goreleaser
       email: noreply@goreleaser
-    folder: Formula
+    directory: Formula
     homepage: https://github.com/tomytp/icpc-companion
     description: Competitive programming companion CLI
     test: |
@@ -35,7 +35,7 @@ brews:
 
 nfpms:
   - id: deb
-    package_name: icpc-companion
+    package_name: puc-companion
     file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     formats: [deb]
     maintainer: "tomytp <thomazrebellomiranda@gmail.com>"
