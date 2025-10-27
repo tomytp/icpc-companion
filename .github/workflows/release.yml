@@ -53,6 +53,6 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
           shopt -s nullglob
           for deb in dist/*.deb; do
-            echo "Pushing $deb to Cloudsmith $CS_REPO"
-            cloudsmith push deb "$CS_REPO" any-distro/any-version "$deb" --api-key "$CS_API_KEY"
+            echo "Pushing $deb to Cloudsmith $CS_REPO/any-distro/any-version"
+            cloudsmith push deb "$CS_REPO/any-distro/any-version" "$deb" --api-key "$CS_API_KEY"
           done
