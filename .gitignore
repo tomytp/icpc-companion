@@ -1,6 +1,5 @@
 dist/*
 bin/*
-comp
 *.exe
 *.idea/*
 *.DS_Store
