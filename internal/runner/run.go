@@ -6,6 +6,7 @@ import (
     "os"
     "os/exec"
     "path/filepath"
+    "runtime"
     "sort"
     "strings"
 )
@@ -33,7 +34,35 @@ func RunInteractive(debug bool) error {
     bin.Stdin = os.Stdin
     bin.Stdout = os.Stdout
     bin.Stderr = os.Stderr
+    // Prefer sanitizer-friendly output if the binary was built with -fsanitize.
+    // These env vars are harmless if ASAN/UBSAN aren’t linked.
+    {
+        env := os.Environ()
+        if sym, err := exec.LookPath("llvm-symbolizer"); err == nil {
+            env = append(env, "ASAN_SYMBOLIZER_PATH="+sym, "MSAN_SYMBOLIZER_PATH="+sym)
+        }
+        // Force colored, verbose sanitizer output to stderr.
+        env = append(env,
+            "ASAN_OPTIONS=color=always:abort_on_error=1:detect_leaks=1:strict_string_checks=1",
+            "UBSAN_OPTIONS=print_stacktrace=1:color=always",
+        )
+        bin.Env = env
+    }
     runErr := bin.Run()
+    // Detect segfault to improve messaging
+    if ee, ok := runErr.(*exec.ExitError); ok {
+        if status, ok2 := ee.Sys().(interface{ Signaled() bool; Signal() os.Signal }); ok2 {
+            if status.Signaled() && status.Signal().String() == "segmentation fault" || strings.Contains(strings.ToLower(status.Signal().String()), "segv") {
+                fmt.Printf("\u001b[0;31mSegmentation fault detected.\u001b[0m\n")
+                if !debug {
+                    fmt.Println("Tip: run with -d to include debug symbols for better traces.")
+                }
+                if runtime.GOOS == "darwin" {
+                    fmt.Println("Tip (macOS): install lldb and run: lldb -- ./" + target + " then use 'run' and 'bt'.")
+                }
+            }
+        }
+    }
     _ = os.Remove(target)
     return runErr
 }
@@ -56,4 +85,3 @@ func latestCpp(dir string) (string, error) {
     })
     return files[0], nil
 }
-
