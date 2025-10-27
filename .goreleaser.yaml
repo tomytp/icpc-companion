@@ -1,3 +1,4 @@
+version: 2
 project_name: puc-companion
 
 before:
@@ -46,4 +47,3 @@ checksum:
 
 changelog:
   use: git
-
