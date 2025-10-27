@@ -17,7 +17,7 @@ builds:
 archives:
   - id: archive
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    builds: [comp]
+    ids: [comp]
 
 brews:
   - name: puc-companion
