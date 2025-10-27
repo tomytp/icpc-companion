@@ -1,0 +1,49 @@
+project_name: puc-companion
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: comp
+    main: ./cmd/comp
+    binary: comp
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+
+archives:
+  - id: archive
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    builds: [comp]
+
+brews:
+  - name: puc-companion
+    tap:
+      owner: tomytp
+      name: puc-companion
+    commit_author:
+      name: goreleaser
+      email: noreply@goreleaser
+    folder: Formula
+    homepage: https://github.com/tomytp/icpc-companion
+    description: Competitive programming companion CLI
+    test: |
+      system "#{bin}/comp", "--help"
+
+nfpms:
+  - id: deb
+    package_name: icpc-companion
+    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats: [deb]
+    maintainer: "tomytp <thomazrebellomiranda@gmail.com>"
+    description: Competitive programming companion CLI
+    license: MIT
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  use: git
+
