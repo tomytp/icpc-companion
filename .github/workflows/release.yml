@@ -25,6 +25,9 @@ jobs:
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    env:
+      CS_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+      CS_REPO: ${{ secrets.CLOUDSMITH_REPO }}
     permissions:
       contents: write
       pull-requests: write
@@ -42,10 +45,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
       - name: Upload .deb packages to Cloudsmith (optional)
-        if: ${{ secrets.CLOUDSMITH_API_KEY != '' }}
-        env:
-          CS_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
-          CS_REPO: ${{ secrets.CLOUDSMITH_REPO }}
+        if: ${{ env.CS_API_KEY != '' }}
         run: |
           set -euo pipefail
           python3 -m pip install --user --upgrade cloudsmith-cli
@@ -55,4 +55,3 @@ jobs:
             echo "Pushing $deb to Cloudsmith $CS_REPO"
             cloudsmith push deb "$CS_REPO" any-distro/any-version "$deb" --api-key "$CS_API_KEY"
           done
-
