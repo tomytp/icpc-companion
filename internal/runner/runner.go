@@ -7,6 +7,7 @@ import (
     "os"
     "path/filepath"
     "strings"
+    "time"
 
     "github.com/tomytp/icpc-companion/internal/config"
     fsutil "github.com/tomytp/icpc-companion/internal/fs"
@@ -104,4 +105,70 @@ func Solve() error {
 
 func Test(debug bool) error {
     return tester.Run(debug)
+}
+
+func ThemeCP(name string, count int) error {
+    cfg, _ := config.Load("")
+    if cfg.BasePath == "" {
+        return errors.New("configuration not found! Run `comp setup` to create one")
+    }
+
+    if name == "" {
+        name = time.Now().Format("2006-01-02")
+    }
+
+    folderPath := filepath.Join(cfg.BasePath, "themecp", name)
+
+    var tplCode, mkCode string
+    if cfg.TemplatePath != "" {
+        if b, err := os.ReadFile(cfg.TemplatePath); err == nil {
+            tplCode = string(b)
+        }
+    }
+    if cfg.MakefilePath != "" {
+        if b, err := os.ReadFile(cfg.MakefilePath); err == nil {
+            mkCode = string(b)
+        }
+    }
+
+    srv := server.NewTimedServer(":10043")
+    fmt.Printf("Waiting for %d problems on port 10043\n", count)
+    batch := srv.ServeWithTimeout()
+
+    if len(batch) == 0 {
+        fmt.Println("\nNo problems received.")
+        return nil
+    }
+
+    if err := fsutil.EnsureDir(folderPath); err != nil {
+        return err
+    }
+
+    letters := []string{"a", "b", "c", "d", "e", "f", "g", "h"}
+    for i, p := range batch {
+        if i >= count {
+            break
+        }
+        letter := letters[i]
+
+        sol := filepath.Join(folderPath, letter+".cpp")
+        if _, err := os.Stat(sol); errors.Is(err, os.ErrNotExist) {
+            _ = fsutil.WriteFile(sol, tplCode)
+        }
+        if mkCode != "" {
+            _ = fsutil.WriteFile(filepath.Join(folderPath, "makefile"), mkCode)
+        }
+        tests := make([]struct{ Input, Output string }, len(p.Tests))
+        for j, t := range p.Tests {
+            tests[j].Input, tests[j].Output = t.Input, t.Output
+        }
+        if len(tests) > 0 {
+            _ = fsutil.CreateTestCases(folderPath, letter, tests)
+        }
+        fmt.Printf("  %s -> %s\n", p.Name, letter+".cpp")
+    }
+
+    fmt.Printf("\nOpening VS Code in directory: %s\n", folderPath)
+    util.OpenVSCode(folderPath)
+    return nil
 }
